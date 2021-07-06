@@ -21,7 +21,8 @@ list_of_images = [i for i in list_of_files_in_directory if i[-4:]== ".jpg"]
 for name_img in list_of_images:
     img_to_crop = Image.open(f'{directory}/{name_img}')
 
-    #Ищем пунктирную линию между квитанциями
+    # Ищем пунктирную линию между квитанциями
+    # Search for the dotted line between receipts
     img = cv.imread(cv.samples.findFile(relative_path=r"C:\Users\19kub\Desktop\New_folder\\" + name_img))
     kernel1 = np.ones((2,10),np.uint8)    # Здесь менял цифры для подбора линии
     kernel2 = np.ones((9,9),np.uint8)
@@ -44,22 +45,21 @@ for name_img in list_of_images:
         cv.line(img,(l[0], l[1]), (l[2], l[3]), (0,255,0),2) # (l[0],l[1]), (l[2],l[3]) Х,У - коорд. начала и конца линии
         print((l[0], l[1]), (l[2], l[3]))
 
-        if 100<l[1] < 1500:     # приблизительно здесь находится искомая линия
+        if 100<l[1] < 1500:     # approximately here is the line we are looking for
             y_of_cut1 = l[1]
             break
-    """ # Раскомментируй для просмотра найденной линии
+    """ # Uncomment to see the line found
     cv.namedWindow('Final Image with dotted Lines detected', cv.WINDOW_NORMAL)
     cv.imshow('Final Image with dotted Lines detected', img)
     cv.waitKey()
     """
     # Режем файл по поответствующей координате y, распознаём чья это квитанция и сохраняем по нужным именем
+    # We cut the file by the corresponding y-coordinate, recognize whose receipt it is and save it by the correct name
     width, height = img_to_crop.size
     im_crop1 = img_to_crop.crop((0, 0, width, y_of_cut1))
     pattern = r'ФИО: (\w+) '
-
-    # Будет выведен весь текст с картинки
     config = r'--oem 3 --psm 6'
-    text = pytesseract.image_to_string(im_crop1, config=config, lang='rus')
+    text = pytesseract.image_to_string(im_crop1, config=config, lang='rus') # весь текст с картинки
     # print(text)
     match = re.search(pattern, text)
     print(name_img, match[1])
@@ -68,11 +68,10 @@ for name_img in list_of_images:
         # print(f'Найдена подстрока >{match[1]}< с позиции {match.start(0)} до {match.end(0)}')
         # print('_____________________________________________')
         im_crop1.save(f'IMG_Croped/{match[1]}.jpg','JPEG', quality=95)
-
-
         # print(text)
     else:
         print(name_img)
+    # I know it's not good, but it was faster than creating a function. One day I'll fix it. :)
     im_crop2 = img_to_crop.crop((0, y_of_cut1, width, height))
     text = pytesseract.image_to_string(im_crop2, config=config, lang='rus')
     match = re.search(pattern, text)
